@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        #app {
+        font-family: 'Helvetica', Arial, sans-serif;
+        }
+        a {
+        text-decoration: none;
+        color: #f66;
+        }
+        li {
+        line-height: 1.5em;
+        margin-bottom: 20px;
+        }
+        .author, .date {
+        font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+    <div id="app">
+        <h1>Latest Vue.js Commits</h1>
+        <template v-for="branch in branches">
+            <!-- 綁定 = {{}} = v-bind = :,用v-model來做雙向綁定, input選到哪一個branch就去更新data裡面的currentBranch的值, 然後再去自動更新p標籤的內容 -->
+            <input type="radio" 
+            :value="branch"
+            v-model="currentBranch">
+            {{ branch }}
+        </template>
+        <p>vuejs/vue@{{ currentBranch }}</p>
+        <ul>
+            <li v-for="record in commits">
+                <a :href="record.html_url" target="_blank" class="commit">update record</a>
+                - <span class="message">{{ record.commit.message }}</span><br>
+                by <span class="author"><a :href="record.author.html_url">{{ record.commit.author.name }}</a></span>
+                at <span class="date">{{ record.commit.author.date | formatDate }}</span>
+            </li>
+        </ul>
+    </div>
+    <script>
+        let apiURL = 'https://api.github.com/repos/vuejs/vue/commits?per_page=3&sha='
+        let app = new Vue({
+            el: '#app',
+            data: {
+                branches: ['master', 'dev'],
+                currentBranch: 'master',
+                commits: null
+            },
+            created: function () {
+                this.fetchData();
+            },
+            watch: {
+                currentBranch: 'fetchData'
+            },
+            // 上面等效下面
+            // watch: {
+            //     currentBranch: function() {
+            //         this.fetchData();
+            //     }
+            // },
+            filters: {
+                formatDate: function (v) {
+                    return v.replace(/T|Z/g, ' ');
+                }
+            },
+            methods: {
+                fetchData: function () {
+                    let xhr = new XMLHttpRequest();
+                    let self = this;
+                    xhr.open('GET', apiURL + self.currentBranch);
+                    xhr.onload = function () {
+                        self.commits = JSON.parse(xhr.responseText);
+                    };
+                    xhr.send();
+                }
+            }
+        })
+    </script>
+</body>
+</html>
